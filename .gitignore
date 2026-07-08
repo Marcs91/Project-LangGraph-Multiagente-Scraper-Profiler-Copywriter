@@ -4,6 +4,15 @@
 !.env.example
 *.pem
 *.key
+*.pfx
+*.p12
+*.crt
+id_rsa*
+id_ed25519*
+*credentials*.json
+*service-account*.json
+secrets.yaml
+secrets.yml
 
 # ==== Python (Backend) ====
 __pycache__/
