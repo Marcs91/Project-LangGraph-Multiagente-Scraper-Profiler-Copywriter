@@ -1,0 +1,49 @@
+# ==== Secretos / credenciales ====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ==== Python (Backend) ====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ==== LangGraph runtime / checkpoints ====
+Backend/.langgraph_api/
+.langgraph_api/
+
+# ==== Salidas generadas por los agentes (datos de prospectos, no código) ====
+Backend/Salidas de los Agentes/
+
+# ==== Node / Frontend ====
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# ==== Editores / OS ====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==== Logs ====
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*

@@ -1,0 +1,30 @@
+# ==== Secretos / credenciales ====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ==== Python ====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ==== LangGraph runtime / checkpoints ====
+.langgraph_api/
+
+# ==== Salidas generadas por los agentes ====
+Salidas de los Agentes/
+
+# ==== Control de versiones / editores ====
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# ==== Docs ====
+README.md
