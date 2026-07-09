@@ -4,6 +4,9 @@ langchain>=1.0.0
 langchain-openai>=0.3.0
 langchain-core>=0.3.0
 
+# Agente 2 - Profiler (búsqueda web complementaria)
+langchain-tavily>=0.1.0
+
 # Grafo LangGraph v1 (comatible con langChain v1)
 langgraph>=1.0.0
 

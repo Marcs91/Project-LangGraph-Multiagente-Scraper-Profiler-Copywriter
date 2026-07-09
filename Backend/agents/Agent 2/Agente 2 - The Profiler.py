@@ -3,6 +3,7 @@ Agente 2 - The Profiler
 
 Analiza el modelo de negocio a partir de los datos scrapeados y limpios del Agente 1.
 Enfocado en: Puntos de Dolor, tecnología usada, carencias y cliente ideal.
+Puede complementar el análisis con búsquedas en internet vía la tool tavily_search.
 
 Recibe: cleaned_data (salida del Agente 1)
 Devuelve: profile_data (perfil de negocio para el Agente 3)
@@ -17,16 +18,17 @@ import yaml
 SALIDAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Salidas de los Agentes")
 _PROMPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prompt", "prompt_instruction.yaml")
 
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
+from langchain_tavily import TavilySearch
 
 
 def _load_prompt() -> str:
     """Carga el prompt desde prompt/prompt_instruction.yaml (relativo a este archivo)."""
     with open(_PROMPT_PATH, encoding="utf-8") as f:
         return (yaml.safe_load(f) or {})["system_prompt"]
-    
+
 
 # --- Tipos para el grafo ---
 class ProfilerState(TypedDict, total=False):
@@ -36,12 +38,13 @@ class ProfilerState(TypedDict, total=False):
     url: str
 
 
-# --- Cadeena LCEL (definida fuera del nodo) ---
+# --- Agente ReAct con tool de búsqueda web (definido fuera del nodo) ---
 llm = init_chat_model("openai:gpt-4o", temperature=0.0)
+tools = [TavilySearch(max_results=5)]
 
-prompt_profiler = ChatPromptTemplate.from_template(_load_prompt())
+SYSTEM_PROMPT = _load_prompt()
 
-profiler_chain = prompt_profiler | llm | StrOutputParser()
+profiler_agent = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT)
 
 
 def _format_cleaned_data_for_prompt(cleaned_data: list[dict[str, Any]]) -> str:
@@ -57,16 +60,35 @@ def _format_cleaned_data_for_prompt(cleaned_data: list[dict[str, Any]]) -> str:
 
 def profiler_node(state: ProfilerState) -> dict[str, str]:
     """
-    Nodo que analiza el modelo de negocio usando la cadena LCEL.
+    Nodo que analiza el modelo de negocio usando el agente ReAct.
     Recibe cleaned_data del Agente 1 y devuelve profile_data.
+    El agente puede usar tavily_search si el contenido scrapeado no alcanza.
     """
     cleaned_data = state.get("cleaned_data", [])
     website_content = _format_cleaned_data_for_prompt(cleaned_data)
 
+    user_message = f"""Analiza el siguiente contenido extraído de la website del prospecto y genera el Perfil de Negocio:
+
+<contenido_website>
+{website_content}
+</contenido_website>
+
+Si el contenido no es suficiente para cubrir alguna sección, usa la herramienta tavily_search
+para investigar en internet (ej: noticias recientes, reputación, competidores). Luego entrega
+el Perfil de Negocio completo.
+"""
+
     print("[Agente 2] Profiler ejecutando análisis...", flush=True)
-    profile_result = profiler_chain.invoke({
-        "website_content": website_content,
-    })
+    result = profiler_agent.invoke(
+        {"messages": [HumanMessage(content=user_message)]}
+    )
+
+    # La respuesta final es el último AIMessage con contenido (posterior a cualquier tool call)
+    messages = result["messages"]
+    profile_result = ""
+    for msg in messages:
+        if msg.type == "ai" and msg.content:
+            profile_result = msg.content
     print("[Agente 2] Profiler completado", flush=True)
 
     # Guardar salida en documento para revisión
